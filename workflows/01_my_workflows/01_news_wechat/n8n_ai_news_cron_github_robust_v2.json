@@ -122,7 +122,8 @@
             }
           ]
         },
-        "options": {}
+        "options": {},
+        "bodyParametersJson": "={{ (() => {\n  const cfgItem = $items('SetConfig', 0, 0) || { json: {} };\n  const cfg = cfgItem.json || {};\n  const brand = cfg.BRAND || {};\n  const primary = $json.primary || {};\n  const related = Array.isArray($json.related) ? $json.related : [];\n  const relatedLines = related.length ? related.map(r => `- ${r.title || ''} (${r.url || ''})`).join('\\n') : '- 无参考';\n  const primaryTextItem = $items('ReadPrimary', 0, 0) || { json: '' };\n  const articleTextRaw = primaryTextItem.json;\n  const articleText = typeof articleTextRaw === 'string' ? articleTextRaw : JSON.stringify(articleTextRaw || '');\n  const palette = Array.isArray(brand.palette) ? brand.palette : [];\n  const brandBlock = `BRAND: palette=${JSON.stringify(palette)}, style=${brand.style || ''}, negatives=${brand.negatives || ''}`;\n  const systemMessage = '你是分析师与评论员。输出一个 JSON：{markdown, prompts}；markdown=中文Markdown 1200-1600字；prompts=长度4数组：封面+3个关键观点图像提示（包含构图/隐喻/2-3主色/风格标记，禁止真实人物/商标）。风格与色板来自提供的 BRAND。';\n  const userMessage = `主要文章：${primary.title || ''}\\n来源：${primary.source || ''}\\n链接：${primary.url || ''}\\n发布时间：${primary.publishedAt || ''}\\n作者：${primary.author || ''}\\n摘要：${primary.description || ''}\\n\\n正文全文（若缺失请谨慎）：\\n${articleText}\\n\\n相关参考（仅标题与链接）：\\n${relatedLines}\\n\\n${brandBlock}`;\n  const payload = {\n    model: cfg.OPENAI_CHAT || 'gpt-4o-mini',\n    temperature: 0.4,\n    response_format: { type: 'json_object' },\n    messages: [\n      { role: 'system', content: systemMessage },\n      { role: 'user', content: userMessage }\n    ]\n  };\n  return JSON.stringify(payload);\n})() }}"
       },
       "id": "93eb4a98-ce59-4508-bc64-802dced7d0cd",
       "name": "OpenAICompose",
