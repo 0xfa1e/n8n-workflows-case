@@ -15,7 +15,7 @@
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "const CFG = {\n  QUERY: '(AI OR \\'large language model\\' OR LLM OR 生成式) AND (research OR benchmark OR safety OR eval OR regulation)',\n  LANGUAGE: 'en',\n  FROM_DAYS: 7,\n  MAX_ARTICLES: 100,\n  TAKE_TOP: 30,\n  OPENAI_CHAT: 'gpt-4o-mini',\n  OPENAI_IMAGE: 'gpt-image-1',\n  COVER_SIZE: '1024x576',\n  BODY_SIZE: '1024x1024',\n  BRAND: {\n    palette: ['#0F172A','#22D3EE','#A78BFA'],\n    style: 'editorial illustration, semi-flat, clean, minimal, soft lighting',\n    negatives: 'text, watermark, logo, brand, people, realistic faces, hands, busy background'\n  }\n};\nCFG.FROM_ISO = new Date(Date.now() - CFG.FROM_DAYS*24*60*60*1000).toISOString();\nreturn [{json: CFG}];\n"
+        "jsCode": "const CFG = {\n  QUERY: '(AI OR \\'large language model\\' OR LLM OR 生成式) AND (research OR benchmark OR safety OR eval OR regulation)',\n  LANGUAGE: 'en',\n  FROM_DAYS: 7,\n  MAX_ARTICLES: 20,\n  TAKE_TOP: 30,\n  OPENAI_CHAT: 'gpt-4o-mini',\n  OPENAI_IMAGE: 'gpt-image-1',\n  COVER_SIZE: '1024x576',\n  BODY_SIZE: '1024x1024',\n  BRAND: {\n    palette: ['#0F172A','#22D3EE','#A78BFA'],\n    style: 'editorial illustration, semi-flat, clean, minimal, soft lighting',\n    negatives: 'text, watermark, logo, brand, people, realistic faces, hands, busy background'\n  }\n};\nCFG.FROM_ISO = new Date(Date.now() - CFG.FROM_DAYS*24*60*60*1000).toISOString();\nreturn [{json: CFG}];\n"
       },
       "id": "19cfee95-4ee2-4b30-829f-3ea8e88c72a4",
       "name": "SetConfig",
@@ -30,6 +30,7 @@
     },
     {
       "parameters": {
+        "url": "https://newsapi.org/v2/everything?apiKey=ea6cb051d8234eb390a8289224733bab",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -43,7 +44,7 @@
             },
             {
               "name": "pageSize",
-              "value": "={{ String($json.MAX_ARTICLES || 100) }}"
+              "value": "={{ String($json.MAX_ARTICLES || 20) }}"
             },
             {
               "name": "sortBy",
@@ -79,7 +80,7 @@
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "const cfgItem = $items('SetConfig', 0, 0) || { json: {} };\nconst cfg = cfgItem.json || {};\nconst takeTop = Number(cfg.TAKE_TOP || 30);\nconst articles = (items[0].json.articles || []).map(a => ({\n  title: a.title, url: a.url, description: a.description || '',\n  content: a.content || '', author: a.author || '',\n  source: (a.source && a.source.name) || '', publishedAt: a.publishedAt || ''\n})).filter(a => a.title && a.url);\nfunction host(u){ \n  try { \n    return new URL(u).hostname.replace(/^www\\./,''); \n  } catch { \n    return ''; \n  } \n}\nfunction hours(iso){ \n  return Math.max(1,(Date.now()-new Date(iso||Date.now()).getTime())/36e5); \n}\nfunction recency(h){ \n  if(h<=24) return 20; \n  if(h<=48) return 14; \n  if(h<=168) return 9; \n  return 3; \n}\nfunction depth(text){ \n  const l=text.length; \n  let s=l>8000?18:l>4000?14:l>1500?10:l>800?7:4;\n  if(/arxiv|doi|github|sec\\./i.test(text)) \n    s+=2; \n  return Math.min(20,s); \n}\nfunction srcScore(hn){ \n  return /arxiv|nature|sciencedirect|reuters|bloomberg|ft|nytimes|semianalysis|alignmentforum|lesswrong|theverge|techcrunch/i.test(hn)?30:18; \n}\nfunction originality(t){ \n  return /exclusive|interview|whitepaper|benchmark|replicate|ablations?/i.test(t)?8:4; }\nfunction author(a){ \n  return a ? (a.includes(' ')?12:8) : 3; \n}\nfunction score(a){\n  const txt = `${a.title}\\n${a.description}\\n${a.content}`;\n  return Math.round(0.35*srcScore(host(a.url)) + 0.20*recency(hours(a.publishedAt)) + 0.20*depth(txt) + 0.10*originality(txt) + 0.15*author(a.author));\n}\n\nconst buckets = new Map();\n\nfor (const a of articles){\n  const key=(a.title||'').toLowerCase().replace(/[^\\w\\s]/g,' ').replace(/\\s+/g,' ').trim();\n  const s=score(a);\n  const j={...a, QualityScore:s, host:host(a.url)};\n  if(!buckets.has(key)) \n    buckets.set(key,[]);\n  buckets.get(key).push(j);\n}\nlet kept=[];\nfor (const [,group] of buckets){ \n  group.sort((x,y)=>y.QualityScore-x.QualityScore); \n  kept.push(group[0]); \n}\n\nkept.sort((a,b)=>b.QualityScore-a.QualityScore);\n\nif (!kept.length) {\n  throw new Error('No NewsAPI candidates returned for current configuration');\n}\nconst takeCount = Math.min(takeTop, kept.length);\nkept = kept.slice(0, takeCount);\nconst primary = kept[0];\nconst related = kept.slice(1, 4);\nreturn [{json:{primary, related, candidates: kept}}];\n"
+        "jsCode": "const cfgItem = $items('SetConfig', 0, 0) || { json: {} };\nconst cfg = cfgItem.json || {};\nconst takeTop = Number(cfg.TAKE_TOP || 30);\nconst articles = (items[0].json.articles || []).map(a => ({\n  title: a.title, url: a.url, description: a.description || '',\n  content: a.content || '', author: a.author || '',\n  source: (a.source && a.source.name) || '', publishedAt: a.publishedAt || ''\n})).filter(a => a.title && a.url);\nfunction host(u){ \n  try { \n    return new URL(u).hostname.replace(/^www\\./,''); \n  } catch { \n    return ''; \n  } \n}\nfunction hours(iso){ \n  return Math.max(1,(Date.now()-new Date(iso||Date.now()).getTime())/36e5); \n}\nfunction recency(h){ \n  if(h<=24) return 20; \n  if(h<=48) return 14; \n  if(h<=168) return 9; \n  return 3; \n}\nfunction depth(text){ \n  const l=text.length; \n  let s=l>8000?18:l>4000?14:l>1500?10:l>800?7:4;\n  if(/arxiv|doi|github|sec\\./i.test(text)) \n    s+=2; \n  return Math.min(20,s); \n}\nfunction srcScore(hn){ \n  return /arxiv|nature|sciencedirect|reuters|bloomberg|ft|nytimes|semianalysis|alignmentforum|lesswrong|theverge|techcrunch/i.test(hn)?30:18; \n}\nfunction originality(t){ \n  return /exclusive|interview|whitepaper|benchmark|replicate|ablations?/i.test(t)?8:4; }\nfunction author(a){ \n  return a ? (a.includes(' ')?12:8) : 3; \n}\nfunction score(a){\n  const txt = `${a.title}\\n${a.description}\\n${a.content}`;\n  return Math.round(0.35*srcScore(host(a.url)) + 0.20*recency(hours(a.publishedAt)) + 0.20*depth(txt) + 0.10*originality(txt) + 0.15*author(a.author));\n}\n\nconst buckets = new Map();\n\nfor (const a of articles){\n  const key=(a.title||'').toLowerCase().replace(/[^\\w\\s]/g,' ').replace(/\\s+/g,' ').trim();\n  const s=score(a);\n  const j={...a, QualityScore:s, host:host(a.url)};\n  if(!buckets.has(key)) \n    buckets.set(key,[]);\n  buckets.get(key).push(j);\n}\nlet kept=[];\nfor (const [,group] of buckets){ \n  group.sort((x,y)=>y.QualityScore-x.QualityScore); \n  kept.push(group[0]); \n}\n\nkept.sort((a,b)=>b.QualityScore-a.QualityScore);\n\nif (!kept.length) {\n  throw new Error('No NewsAPI candidates returned for current configuration');\n}\nconst takeCount = Math.min(takeTop, kept.length);\nkept = kept.slice(0, takeCount);\nconst primary = kept[0];\nconst related = kept.slice(1, 4);\nreturn [{json:{primary,related,candidates: kept}}];\n"
       },
       "id": "d52bf12f-6dca-4cc3-9b5d-f2f014a95cd1",
       "name": "ScoreSelect",
@@ -102,9 +103,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -240,
-        144
-      ]
+        -208,
+        256
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -114,7 +116,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ (() => {\n  const cfgItem = $items('SetConfig', 0, 0) || { json: {} };\n  const cfg = cfgItem.json || {};\n  const brand = cfg.BRAND || {};\n  const primary = $json.primary || {};\n  const related = Array.isArray($json.related) ? $json.related : [];\n  const relatedLines = related.length\n    ? related.map(r => `- ${r.title || ''} (${r.url || ''})`).join('\\n')\n    : '- 无参考';\n  const primaryTextItem = $items('ReadPrimary', 0, 0) || { json: '' };\n  const articleTextRaw = primaryTextItem.json;\n  const articleText = typeof articleTextRaw === 'string'\n    ? articleTextRaw\n    : JSON.stringify(articleTextRaw || '');\n  const palette = Array.isArray(brand.palette) ? brand.palette : [];\n  const brandBlock = `BRAND: palette=${JSON.stringify(palette)}, style=${brand.style || ''}, negatives=${brand.negatives || ''}`;\n\n  const systemMessage = `你是分析师与评论员。输出一个 JSON：{markdown, prompts}；\nmarkdown=中文Markdown 1200-1600字，对用户提供的文章进行分析、提炼文章的主要内容和观点，并对其进行分析和评价；要求： \n1、文章结构和总体内容不变。不能泛泛而谈，要有细节，有情绪，有想法；不要随口胡说； \n2、像朋友之间一样，语言需要平等，没有说教感，说话的时候眉飞色舞的感觉； \n3、遣词造句要偏向口语化，偶尔体现一下自己的幽默感，不要太多的书面用语，多用短句，尽量少用长句； \n4、全篇写作要求（最重要，严格遵守）​\n- 禁止使用书面关联用语例如：首先、然后、其次、再者说、总的来说、同时、殊不知、例如、除非、另一方面、否则、相反、因为、所以、近期、近来、与此同时、总而言之、换句话说、特别是、此外、换言之、最后、特别是等等，请使用口语化词汇​\n- 禁止输出任何分隔线、破折号、符号、表格、代码块​\n- 双引号要用「」号代替​- 不允许使用模板化结构。​\n- 不允许重复使用同样的句式结构。​\n- 偶尔可以有一些啰嗦的口头禅，或者不符合语法规范的话，避免太过完美。​\n- 要像人一样说话，不要AI味儿，不要堆砌空话套话，要用口语化描述，避免学术化表达，增加活人感，比较新的名词或缩写要给出解释，让普通用户都能看得懂。\n​- 加入个人情感和温度，不要使用客观、中立的陈述。 \n- 禁止假大空的表达。​\n- 需要有逻辑，能吸引人一直能读下去。 \n- 打乱节奏：短句、长句、插入语混用，有时话没说完先岔开，有时补一句废话。 \n- 减少整齐重复的句式：比如「他……他……」或者「你以为……结果……」不要一口气用两三次。 \n- 用生活化的跳跃思维：偶尔加点没用的感叹、情绪插话，比如「我当时是真没想到」「这事要是换成我」。 \n- 少用完美的逻辑串联：别一环套一环地写，可以像朋友聊天一样有点“跳”。 \n- 多用细节词，不用套话：把「精彩」「节奏快」换成场景感强的描述，比如「看到凌晨两点还舍不得关手机」。 \n- 多加几段小情绪插话，把人味拉满 \n- 混用的、地、得 ，在不影响阅读的情况下，出现少量同音错别字；\n- 输出风格偏口语化\n- 一句话就一个段落，不要长段落；\n- 标记图片插入位：在第一段后插入封面图 <!--IMG_COVER-->；\n  根据文章内容，判断需要插入图片地方（两个图片之间间隔不少于 300 字），然后分别放如下标识： <!--IMG_KP1-->、<!--IMG_KP2-->、<!--IMG_KPn-->。\nprompts=用于生成图片的提示词数组：封面+内容图片提示词（包含构图/隐喻/2-3主色/风格标记，禁止真实人物/商标），生成封面图片的提示词与全文内容匹配，内容图片的提示词需要与上下文匹配，与 markdown 中的图片插入位严格对应，内容中标识了多少个图片插入位，就必须有多少个提示词。风格与色板来自提供的 BRAND。`;\n\n  const userMessage = `主要文章：${primary.title || ''}\\n来源：${primary.source || ''}\\n链接：${primary.url || ''}\\n发布时间：${primary.publishedAt || ''}\\n作者：${primary.author || ''}\\n摘要：${primary.description || ''}\\n\\n正文全文（若缺失请谨慎）：\\n${articleText}\\n\\n相关参考（仅标题与链接）：\\n${relatedLines}\\n\\n${brandBlock}`;\n  return JSON.stringify({\n    model: cfg.OPENAI_CHAT || 'gpt-4o-mini',\n    temperature: 0.4,\n    response_format: { type: 'json_object' },\n    messages: [\n      { role: 'system', content: systemMessage },\n      { role: 'user', content: userMessage }\n    ]\n  });\n})() }}\n",
+        "jsonBody": "={{ (() => {\n  const cfgItem = $items('SetConfig', 0, 0) || { json: {} };\n  const cfg = cfgItem.json || {};\n  const brand = cfg.BRAND || {};\n  const primary = $('ScoreSelect').item.json.primary || {};\n\n  const related = Array.isArray($('ScoreSelect').item.json.related ) ? $('ScoreSelect').item.json.related : [];\n\n  const relatedLines = related.length\n    ? related.map(r => `- ${r.title || ''} (${r.url || ''})`).join('\\n')\n    : '- 无参考';\n\n  const articleTextRaw = $json?.data;\n\n  const articleText = typeof articleTextRaw === 'string'\n    ? articleTextRaw\n    : JSON.stringify(articleTextRaw || '');\n  const palette = Array.isArray(brand.palette) ? brand.palette : [];\n  const brandBlock = `BRAND: palette=${JSON.stringify(palette)}, style=${brand.style || ''}, negatives=${brand.negatives || ''}`;\n\n  const userMessage = `主要文章：\n\\n${articleText}\n\n\\n\\n相关参考（仅标题与链接）：\\n${relatedLines}\\n\\n${brandBlock}`;\n\n  const systemMessage = `\n# role\n你是分析师与评论员。\n\n# rules\n1、内容写作要求：\n- markdown=中文Markdown 1400-1600字：\n- 要像人一样说话，不要AI味儿，要用口语化表达，避免学术化表达，增加活人感，让普通用户都能看得懂。\n​- 加入个人情感和温度，不要使用客观、中立的陈述。 \n- 禁止假大空的表达，要有细节，有情绪，有想法。​ \n- 打乱节奏：短句、长句、插入语混用，有时话没说完先岔开，有时补一句废话。 \n- 混用的、地、得 ，混用全角、半角标点符号，在不影响阅读的情况下，出现少量同音错别字；\n- 一句话就一个段落，不要长段落；\n\n2、图片生成要求：\n- 在 markdown 中标记图片插入位：在第一段后插入封面图 <!--IMG_COVER-->；\n- 根据文章内容，判断需要插入图片地方（两个图片之间间隔不少于 300 字），然后分别放如下标识： <!--IMG_KP1-->、<!--IMG_KP2-->、<!--IMG_KPn-->。\n- prompts=用于生成全部图片的提示词数组：封面+内容图片提示词（包含构图/隐喻/2-3主色/风格标记，禁止真实人物/商标），生成封面图片的提示词与全文内容匹配，内容图片的提示词需要与上下文匹配，与 markdown 中的图片插入位严格对应，内容中标识了多少个图片插入位，就必须有多少个提示词。\n\n# task\n1、学习【风格参考文章】<STYLE_REF> 中的文章写作风格，注意：仅以 <STYLE_REF> 学习语气/句式/节奏，禁止引用其中事实/人名/数据/比喻；不得复用 ≥8 字连续片段；\n2、按照第一步中的文章写作风格 和【rules】中的内容写作要求，对用户提供的文章进行分析，提炼文章的主要内容和观点，对其进行分析和评价，生成一篇文章内容，期间可以参考用户提供的参考文章；\n3、根据【rules】中的图片生成要求，在 markdown 中标识图片插入位，同时生成图片提示词，输出一个 JSON：{markdown, prompts}；\n4、对 markdown 中的内容进行自检，如果不符合内容写作要求，则重新从第一步开始执行。\n\n# 风格参考文章\n<STYLE_REF>\n海德格尔在《形而上学导论》中把无聊分成了三个层次：\n\n第一层，最基础的无聊，对具体事物的无聊。比如你一个人在车站等火车，身边什么也没有。这个无聊是缺乏刺激导致的生理反应。\n\n第二层，是对整个情境的无聊。不只是这一件事儿无聊，而是这里让你整个下午都提不起劲，不知道要做什么。你看着办公室里的一切只觉得没意思。\n\n第三层，则是存在主义的无聊。不是这里的环境单调的问题，而是你感到自己整个人生都没有方向，对什么事情都提不起兴趣。你试图逃避这种状态，说换一个环境、做点别的事，但发现一切选项都同样无聊 —— 连“改变”本身都失去了意义。\n\n不同层次的无聊需要不同的应对方法。\n\n✵\n\n对抗初级无聊只需要恢复感官的丰富性。比如出去接触大自然，去徒步，搞个园艺、钓鱼之类；或者参加社区活动，集体跑步，参与真实的面对面社交，这些活动足以解决大部分无聊感。\n\n但在哲学家看来，刻意追求新鲜事物也是一种无聊。\n\n比如你明明已经有一部功能完全够用的手机，却还是忍不住想换一个更新的。那不是因为你真的需要，而是因为你在用“新”来刺激自己，用“升级”来打破无聊。哲学家会说这也是异化。\n\n国分功一郎的建议是与其跟着商家一次次升级，不如一次性买个最好的。奢侈一把，买个让你满意而且超出满意的，然后长时间使用它，从此退出“换手机”这个游戏。\n\n但是更深层次的无聊就不能用新东西或者好东西解决了。如果你就是觉得工作没意思，用最强的电脑又有啥用呢？\n\n尼采对此会说，你那个无聊的根源在于价值的空洞 —— 要摆脱无聊，你得重新思考各种事物的价值，你得去选择、去创造价值才行。尼采总是这么励志。\n\n海德格尔就比较关怀了。他说我们之所以无聊，因为这个世界本来就是无聊的 —— 世界本身并没有绝对的意义。我们被“抛入”这么一个世界之中，直面虚无，感到无聊难道不是很正常吗？但是我们有选择！你可以主动创造意义，有了意义你就不无聊了。\n\n国分功一郎继承了这些说法，他的核心建议是：人必须做出决断，也就是自主、自觉的选择。\n\n只有当你自己决定、自己承担、自由选择，你才真正体现了作为一个道德主体的存在。说白了这就是「个人主权」。而如果你因为无聊就被各种外部事物牵着走，那你就已经不是一个独立的人。你失去了主权，成了被牵引、被安排、被消费的对象，你何谈道德呢？\n\n所以对抗无聊应该先问自己：我到底想要什么 —— 而不是别人告诉我该要什么。\n\n这听着简单但并不容易，这需要你深度整理自己的价值观。这样说来，无聊是一个警示，它是在提醒你：该停下来思考一下了。\n\n我做了一番调研，发现导致无聊感最重要的心理因素有四个 ——\n\n第一，也是影响最大的一个因素，是主观意义感的缺失 [8]。你觉得你做的事情没有意义，你找不到生活的方向。\n\n第二个因素是「求知性需求（Need for Cognition）」[9]，也就是你是否享受思考。如果一个人面对复杂问题会感兴趣，喜欢推理、愿意学习、乐于在脑子里咀嚼各种信息，那他很难感到无聊。\n\n第三个因素是自控能力 [10]。自控能力强的人善于维持注意力，能持续做事，就不容易无聊。自控能力差的人注意力很容易涣散，干什么都干不长，就很容易陷入无聊状态。\n\n第四个因素是工作挑战性 [11]。如果你的工作具有挑战性，需要你动脑、需要你不断学习和适应，你不会觉得无聊。而如果这份工作高度重复、缺乏自主性、甚至被人严密监控，你会很无聊。\n\n美国弗吉尼亚大学的两位社会心理学家，伊琳·韦斯特盖特（Erin C. Westgate）和蒂莫西·威尔逊（Timothy D. Wilson）在2018年提出一个「意义—注意力成分（Meaning-Attentional Components）模型」[12]，认为无聊是因为两个机制同时失效：一是缺乏意义感，二是注意力没有被合理匹配。\n\n也就是说，当你既感受不到人生的意义，你做的事情又不能吸引你的注意力，你就会深切地感到无聊。\n\n所有的客观环境问题，只不过是“不能吸引注意力”的问题；你真正的问题是内心没有一个愿意集中注意力的目标。\n\n只有短暂的无聊感是因为环境刺激，长期的无聊都是因为自己 —— 因为自己没找到人生意义、认知能力差、意志力不强、工作没干劲。自然和工作环境只是外在的触发点罢了。\n\n我们不应该说无聊的人是可耻的，但无聊是一种精神贫血。\n\n我们专栏多次讲到，那些生活有明确目标感的人，不仅更幸福，而且活得也更长。国分功一郎这本书对此提供了一个具体解释：他们不无聊。\n</STYLE_REF>`;\n\n  return JSON.stringify({\n    model: cfg.OPENAI_CHAT || 'gpt-4o-mini',\n    temperature: 0.4,\n    response_format: { type: 'json_object' },\n    messages: [\n      { role: 'system', content: systemMessage },\n      { role: 'user', content: userMessage }\n    ]\n  });\n})() }}",
         "options": {}
       },
       "id": "93eb4a98-ce59-4508-bc64-802dced7d0cd",
@@ -122,8 +124,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        16,
-        144
+        992,
+        240
       ],
       "headerParametersUi": {
         "parameter": [
@@ -154,8 +156,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        272,
-        144
+        1216,
+        240
       ],
       "notesInFlow": true,
       "notes": "Normalize OpenAI content arrays into structured payload"
@@ -170,8 +172,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        512,
-        144
+        1456,
+        240
       ],
       "notesInFlow": true,
       "notes": "Create image jobs using parsed payload"
@@ -215,8 +217,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        784,
-        144
+        1728,
+        240
       ],
       "headerParametersUi": {
         "parameter": [
@@ -245,29 +247,29 @@
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "const payload = $('ParseLLMPayload').first().json.payload;\nconst markdown = payload.markdown || '';\nconst imgs = Array.isArray(items) ? items : [];\n\n// throw new Error(JSON.stringify({ imgsLen: imgs.length, sample: imgs }));\n\nlet output = '';\nlet used = new Array(imgs.length).fill(false);\n// 3) 封面处理：取第一张作为封面，优先替换 <!--IMG_COVER-->，没有就前置\nconst cover = imgs[0]?.json?.url || '';\nif (cover) {\n  const coverRe = /<!--\\s*IMG_COVER\\s*-->/i;\n  if (coverRe.test(markdown)) {\n    output = markdown.replace(coverRe, `![封面](${cover})`);\n  } else {\n    output = `![封面](${cover})\\n\\n` + markdown;\n  }\n}\nused[0] = true;\n\n// 4) 关键点锚点替换：支持 <!--IMG_KP--> 与带编号的 <!--IMG_KP3-->\n//    规则：带编号优先按编号用图（1→bodies[0]），不带编号按顺序消耗下一张未使用的图\nconst kpRe = /<!--\\s*IMG_KP(?:\\s*(\\d+))?\\s*-->/gi;\n\noutput = output.replace(kpRe, (_, numStr) => {\n  let idx = null;\n\n  if (numStr) {\n    // 1-based → 0-based\n    const n = parseInt(numStr, 10);\n    if (!Number.isNaN(n) && n >= 1) idx = n;\n  }\n\n  // 选择图片：\n  // - 指定编号且存在 → 用该张\n  // - 否则 → 找到下一个未使用的\n  let url = null;\n  if (idx !== null && imgs[idx]?.json?.url) {\n    url = imgs[idx]?.json?.url;\n    used[idx] = true;\n  } else {\n    const next = used.findIndex(u => u === false);\n    if (next !== -1 && imgs[next]?.json?.url) {\n      url = imgs[next]?.json?.url;\n      used[next] = true;\n      idx = next;\n    }\n  }\n\n  // 没图可用，就删除占位（返回空串）\n  if (!url) return '';\n\n  const label = `图 ${typeof idx === 'number' ? idx : ''}`.trim();\n  return `![${label}](${url})`;\n});\n\n// 5) 兜底：还有没用上的图片 → 追加到文末\nfor (let i = 1; i < imgs.length; i++) {\n  if (!used[i] && imgs[i]?.json?.url) {\n    output += `\\n\\n![图 ${i + 1}](${imgs[i]?.json?.url})`;\n  }\n}\n\n\n/**\n \nif (imgs.length && imgs.length > 1) {\n  output += '\\n';\n  imgs.slice(1).forEach((it,idx) => {\n    const image = it.json;\n    if (image && image.url) {\n      const label = `图 ${idx + 1}`;\n      output += `\\n![${label}](${image.url})\\n`;\n    }\n  });\n}\n\n */\n\nreturn [{ json: { markdown: output.trim(), _debug: { urlsCount: imgs.length, imgs: imgs, used } } }];\n\n"
+        "jsCode": "const payload = $('ParseLLMPayload').first().json.payload;\nlet markdown = payload.markdown || '';\nconst imgs = Array.isArray(items) ? items : [];\n\n// throw new Error(JSON.stringify({ imgsLen: imgs.length, sample: imgs }));\n\nlet used = new Array(imgs.length).fill(false);\n// 3) 封面处理：取第一张作为封面，优先替换 <!--IMG_COVER-->，没有就前置\nconst cover = imgs[0]?.json?.url || '';\nif (cover) {\n  const coverRe = /<!--\\s*IMG_COVER\\s*-->/i;\n  if (coverRe.test(markdown)) {\n    markdown = markdown.replace(coverRe, `![封面](${cover})`);\n  } else {\n    markdown = `![封面](${cover})\\n\\n` + markdown;\n  }\n}\nused[0] = true;\n\n// 4) 关键点锚点替换：支持 <!--IMG_KP--> 与带编号的 <!--IMG_KP3-->\n//    规则：带编号优先按编号用图（1→bodies[0]），不带编号按顺序消耗下一张未使用的图\nconst kpRe = /<!--\\s*IMG_KP(?:\\s*(\\d+))?\\s*-->/gi;\n\nmarkdown = markdown.replace(kpRe, (_, numStr) => {\n  let idx = null;\n\n  if (numStr) {\n    // 1-based → 0-based\n    const n = parseInt(numStr, 10);\n    if (!Number.isNaN(n) && n >= 1) idx = n;\n  }\n\n  // 选择图片：\n  // - 指定编号且存在 → 用该张\n  // - 否则 → 找到下一个未使用的\n  let url = null;\n  if (idx !== null && imgs[idx]?.json?.url) {\n    url = imgs[idx]?.json?.url;\n    used[idx] = true;\n  } else {\n    const next = used.findIndex(u => u === false);\n    if (next !== -1 && imgs[next]?.json?.url) {\n      url = imgs[next]?.json?.url;\n      used[next] = true;\n      idx = next;\n    }\n  }\n\n  // 没图可用，就删除占位（返回空串）\n  if (!url) return '';\n\n  const label = `图 ${typeof idx === 'number' ? idx : ''}`.trim();\n  return `![${label}](${url})`;\n});\n\n// 5) 兜底：还有没用上的图片 → 追加到文末\nfor (let i = 1; i < imgs.length; i++) {\n  if (!used[i] && imgs[i]?.json?.url) {\n    markdown += `\\n\\n![图 ${i + 1}](${imgs[i]?.json?.url})`;\n  }\n}\n\n\n/**\n \nif (imgs.length && imgs.length > 1) {\n  output += '\\n';\n  imgs.slice(1).forEach((it,idx) => {\n    const image = it.json;\n    if (image && image.url) {\n      const label = `图 ${idx + 1}`;\n      output += `\\n![${label}](${image.url})\\n`;\n    }\n  });\n}\n\n */\n\nreturn [{ json: { markdown: markdown.trim(), _debug: { urlsCount: imgs.length, imgs: imgs, used } } }];\n\n"
       },
       "id": "c015ea2f-9fc3-49d1-b4ef-61ef6d3022e5",
       "name": "AssembleMD",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        1344,
-        144
+        2288,
+        240
       ]
     },
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "function slugify(s){return (s||'ai-commentary').toLowerCase().replace(/[^a-z0-9\\u4e00-\\u9fa5]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'ai';}\nconst assembleItem = $items('AssembleMD',0,0) || { json: {} };\n\n//throw new Error(JSON.stringify({ assembleItem : assembleItem[0].json}));\n\nconst markdown = assembleItem[0].json.markdown || '';\nconst scoreItem = $items('ScoreSelect',0,0) || { json: {} };\n\n//throw new Error(JSON.stringify({ scoreItem : scoreItem[0]}));\n\nconst fallbackTitle = scoreItem[0].primary ? (scoreItem.json.primary.title || 'AI 评论') : 'AI 评论';\nconst titleMatch = markdown.match(/^#\\s*(.+)$/m);\nconst title = titleMatch ? titleMatch[1] : fallbackTitle;\nconst d = new Date(); \nconst yyyy=d.getFullYear(), mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');\nconst n = String(Math.floor(Math.random()*1000)).padStart(3,'0');\nconst filepath = `${yyyy}-${mm}-${dd}/${n}_${slugify(title)}.md`;\nconst content = Buffer.from(markdown,'utf8').toString('base64');\nconst message = `feat(post): ${yyyy}-${mm}-${dd} ${title}`;\nreturn [{json:{filepath, content, message}}];\n"
+        "jsCode": "function slugify(s){return (s||'ai-commentary').toLowerCase().replace(/[^a-z0-9\\u4e00-\\u9fa5]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'ai';}\nconst assembleItem = $items('AssembleMD',0,0) || { json: {} };\n\n//throw new Error(JSON.stringify({ assembleItem : assembleItem[0].json}));\n\nconst markdown = assembleItem[0].json.markdown || '';\nconst scoreItem = $items('ScoreSelect',0,0) || { json: {} };\n\n//throw new Error(JSON.stringify({ scoreItem : scoreItem[0]}));\n\nconst fallbackTitle = scoreItem[0].json.primary ? (scoreItem[0].json.primary.title || 'AI 评论') : 'AI 评论';\nconst titleMatch = markdown.match(/^#\\s*(.+)$/m);\nconst title = titleMatch ? titleMatch[1] : fallbackTitle;\nconst d = new Date(); \nconst yyyy=d.getFullYear(), mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');\nconst n = String(Math.floor(Math.random()*1000)).padStart(3,'0');\nconst filepath = `${yyyy}-${mm}-${dd}/${n}_${slugify(title)}.md`;\nconst content = Buffer.from(markdown,'utf8').toString('base64');\nconst message = `feat(post): ${yyyy}-${mm}-${dd} ${title}`;\nreturn [{json:{filepath, content, message}}];\n"
       },
       "id": "cf09e2ad-d261-40e8-84da-bbfbfc9059f9",
       "name": "PrepareCommit",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        1600,
-        144
+        2544,
+        240
       ]
     },
     {
@@ -309,8 +311,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1872,
-        144
+        2816,
+        240
       ],
       "headerParametersUi": {
         "parameter": [
@@ -334,18 +336,62 @@
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "const imgs = $input.all().map((item) => ({\n  url: item.json.data[0].url\n}));\nreturn imgs\n"
+        "jsCode": "const imgs = $input.all().map((item) => ({\n  url: item.json?.data ? item.json?.data[0]?.url : ''\n}));\nreturn imgs\n"
       },
       "id": "b20a0591-2752-453a-a74a-6d53408c063f",
       "name": "FinalizeImages",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        1072,
-        144
+        2016,
+        240
       ],
       "notesInFlow": true,
       "notes": "Emit once after image loop completes"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://r.jina.ai/http://' + $json.related[0].url.replace(/^https?:\\/\\//,'') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        384
+      ],
+      "id": "328bd567-2550-4735-9b99-651038c0c649",
+      "name": "readRelated",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://r.jina.ai/http://' + $json.related[1].url.replace(/^https?:\\/\\//,'') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        576
+      ],
+      "id": "48fdd7c2-554c-4948-b8fb-1ac7b253bc20",
+      "name": "HTTP Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://r.jina.ai/http://' + $json.related[2].url.replace(/^https?:\\/\\//,'') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        672
+      ],
+      "id": "8c637d0b-faa0-41dc-99fe-92ed91f42ea1",
+      "name": "HTTP Request1"
     }
   ],
   "pinData": {},
@@ -390,11 +436,6 @@
             "node": "ReadPrimary",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "OpenAICompose",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -404,6 +445,13 @@
         [
           {
             "node": "OpenAICompose",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "readRelated",
             "type": "main",
             "index": 0
           }
@@ -486,13 +534,60 @@
           }
         ]
       ]
+    },
+    "readRelated": {
+      "main": [
+        [
+          {
+            "node": "OpenAICompose",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAICompose",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "OpenAICompose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f6f406da-ca21-4810-9b6c-c9dbb0aefecc",
+  "versionId": "34f26790-5398-402a-b9db-5bb3fed16648",
   "meta": {
     "instanceId": "07d1041ff3917b6fea954efa1ffb533eaee2c99ed393956fa7cc3e8f87f14a09"
   },
