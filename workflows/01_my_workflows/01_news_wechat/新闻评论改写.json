@@ -15,7 +15,7 @@
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "const MUST = [\n  '(AI OR \"large language model\" OR LLM OR 生成式)'\n];\nconst MUST_NOT = [\n  \n];\n\nconst CFG = {\n  QUERY: `${MUST.join(' AND ')} ${MUST_NOT.map(x => `-${x}`).join(' ')}`,\n  LANGUAGE: 'en',\n  FROM_DAYS: 1,\n  MAX_ARTICLES: 50,\n  TAKE_TOP: 30,\n  OPENAI_CHAT: 'gpt-4o-mini',\n  OPENAI_IMAGE: 'gpt-image-1',\n  COVER_SIZE: '1024x576',\n  BODY_SIZE: '1024x1024',\n  BRAND: {\n    palette: ['#0F172A','#22D3EE','#A78BFA'],\n    style: 'editorial illustration, semi-flat, clean, minimal, soft lighting',\n    negatives: 'text, watermark, logo, brand, people, realistic faces, hands, busy background'\n  },\n  // 建议改为：四大分析/洞察优先\n  PREFERRED_CATEGORIES : ['tech_insight','industry_insight','deep_tech','product_insight'],\n  \n  WEIGHTS : {\n    // ——基础权重（总分贡献占比）——\n    base: { sourceTrust: 0.25, recency: 0.15, length: 0.15 },\n  \n    // ——正向信号（每命中一次的基点，内部会封顶/衰减）——\n    signals: {\n      // 洞察/分析\n      insight: {\n        titleCue: 12,      // 标题/URL含 how/why/analysis/解读/洞察/详解/拆解\n        keyword: 10,       // 文内 analysis/deep dive/inside/趋势/产业链 等\n        industry: 10,      // 芯片/供应链/封装/HBM/产能/节点nm 等行业词\n        longform: 8,       // 文本较长（>1500字节）额外加\n        trustedHost: 6     // 可信媒体（BBC/FT/Reuters/WSJ/Ars/Wired…）\n      },\n      // 技术进展\n      tech: {\n        terms: 6,          // architecture/ablation/SOTA/quantization/MoE 等\n        paper: 9,          // arXiv/OpenReview 链接或提及\n        code: 7,           // GitHub/HF 仓库\n        benchmark: 7,      // MMLU/GSM8K/ImageNet/COCO/GLUE…\n        numbers: 2         // 有指标/百分比/大数（轻微加）\n      }\n    },\n  \n    // ——负向信号（每命中一次的扣分；strong insight/tech 时会折扣）——\n    penalties: {\n      pr: 9,               // PR/活动/发布会/获奖/合作/招聘/调查\n      policy: 7,           // 纯政策/法案/合规（分析类会折扣）\n      productNews: 4       // 纯产品发布口径（无技术/无拆解）\n    },\n    dampIfStrong: {        // 有料则“罚款打折”\n      threshold: 18,       // insightBoost+techBoost ≥ 18\n      factor: 0.5\n    },\n  \n    // ——类别乘数（最后乘以这个系数，决定“谁更上头条”）——\n    categoryMultiplier: {\n      tech_insight:     1.25,  // 技术分析/技术洞察 —— 最高\n      industry_insight: 1.25,  // 行业分析/行业洞察 —— 最高\n      deep_tech:        1.12,  // 论文/基准/代码等“硬技术进展”\n      product_insight:  1.08,  // 产品架构拆解/对比评测\n      product_news:     0.85,  // 纯上新/公告\n      policy_news:      0.80,  // 纯政策新闻\n      pr_event:         0.60,  // PR/活动/获奖/招聘等\n      other:            0.75\n    },\n  \n    // ——时效曲线（洞察类不用太追 24h 热点）——\n    recencyHalfLifeHours: 96   // 半衰期 96h：4 天内仍有权重\n  }\n};\n\nCFG.FROM_ISO = new Date(Date.now() - CFG.FROM_DAYS*24*60*60*1000).toISOString();\nreturn [{json: CFG}];\n"
+        "jsCode": "const MUST = [\n  '(AI OR \"large language model\" OR LLM OR 生成式)'\n];\nconst MUST_NOT = [\n  \n];\n\nconst CFG = {\n  QUERY: `${MUST.join(' AND ')} ${MUST_NOT.map(x => `-${x}`).join(' ')}`,\n  LANGUAGE: 'en',\n  FROM_DAYS: 7,\n  MAX_ARTICLES: 50,\n  TAKE_TOP: 30,\n  OPENAI_CHAT: 'gpt-4o-mini',\n  OPENAI_IMAGE: 'gpt-image-1',\n  COVER_SIZE: '1024x576',\n  BODY_SIZE: '1024x1024',\n  BRAND: {\n    palette: ['#0F172A','#22D3EE','#A78BFA'],\n    style: 'editorial illustration, semi-flat, clean, minimal, soft lighting',\n    negatives: 'text, watermark, logo, brand, people, realistic faces, hands, busy background'\n  },\n  // 建议改为：四大分析/洞察优先\n  PREFERRED_CATEGORIES : ['tech_insight','industry_insight','deep_tech','product_insight'],\n  \n  WEIGHTS : {\n    // ——基础权重（总分贡献占比）——\n    base: { sourceTrust: 0.25, recency: 0.15, length: 0.15 },\n  \n    // ——正向信号（每命中一次的基点，内部会封顶/衰减）——\n    signals: {\n      // 洞察/分析\n      insight: {\n        titleCue: 12,      // 标题/URL含 how/why/analysis/解读/洞察/详解/拆解\n        keyword: 10,       // 文内 analysis/deep dive/inside/趋势/产业链 等\n        industry: 10,      // 芯片/供应链/封装/HBM/产能/节点nm 等行业词\n        longform: 8,       // 文本较长（>1500字节）额外加\n        trustedHost: 6     // 可信媒体（BBC/FT/Reuters/WSJ/Ars/Wired…）\n      },\n      // 技术进展\n      tech: {\n        terms: 6,          // architecture/ablation/SOTA/quantization/MoE 等\n        paper: 9,          // arXiv/OpenReview 链接或提及\n        code: 7,           // GitHub/HF 仓库\n        benchmark: 7,      // MMLU/GSM8K/ImageNet/COCO/GLUE…\n        numbers: 2         // 有指标/百分比/大数（轻微加）\n      }\n    },\n  \n    // ——负向信号（每命中一次的扣分；strong insight/tech 时会折扣）——\n    penalties: {\n      pr: 9,               // PR/活动/发布会/获奖/合作/招聘/调查\n      policy: 7,           // 纯政策/法案/合规（分析类会折扣）\n      productNews: 4       // 纯产品发布口径（无技术/无拆解）\n    },\n    dampIfStrong: {        // 有料则“罚款打折”\n      threshold: 18,       // insightBoost+techBoost ≥ 18\n      factor: 0.5\n    },\n  \n    // ——类别乘数（最后乘以这个系数，决定“谁更上头条”）——\n    categoryMultiplier: {\n      tech_insight:     1.25,  // 技术分析/技术洞察 —— 最高\n      industry_insight: 1.25,  // 行业分析/行业洞察 —— 最高\n      deep_tech:        1.12,  // 论文/基准/代码等“硬技术进展”\n      product_insight:  1.08,  // 产品架构拆解/对比评测\n      product_news:     0.85,  // 纯上新/公告\n      policy_news:      0.80,  // 纯政策新闻\n      pr_event:         0.60,  // PR/活动/获奖/招聘等\n      other:            0.75\n    },\n  \n    // ——时效曲线（洞察类不用太追 24h 热点）——\n    recencyHalfLifeHours: 96   // 半衰期 96h：4 天内仍有权重\n  }\n};\n\nCFG.FROM_ISO = new Date(Date.now() - CFG.FROM_DAYS*24*60*60*1000).toISOString();\nreturn [{json: CFG}];\n"
       },
       "id": "19cfee95-4ee2-4b30-829f-3ea8e88c72a4",
       "name": "SetConfig",
@@ -80,14 +80,14 @@
     {
       "parameters": {
         "language": "JavaScript",
-        "jsCode": "/***********************\n * ScoreSelect (v2) — 深度筛选与加权排序\n * 期望输入：items[0].json.articles  (NewsAPI 风格)\n * 期望可选：$items('SetConfig',0,0).json 里含:\n *   - PREFERRED_CATEGORIES: ['tech_insight','industry_insight','deep_tech','product_insight'] 等\n *   - WEIGHTS: 见下 DEFAULT_WEIGHTS，可在 SetConfig 覆盖\n * 产出：{ primary, related, candidates }\n ***********************/\n\nfunction deepMerge(t, s) {\n  if (!s || typeof s !== 'object') return t;\n  for (const k of Object.keys(s)) {\n    const v = s[k];\n    if (v && typeof v === 'object' && !Array.isArray(v)) {\n      if (!t[k] || typeof t[k] !== 'object') t[k] = {};\n      deepMerge(t[k], v);\n    } else t[k] = v;\n  }\n  return t;\n}\n\nconst DEFAULT_WEIGHTS = {\n  base: { sourceTrust: 0.25, recency: 0.15, length: 0.15 }, // 基础分占比\n  signals: {\n    insight: {\n      titleCue: 12,     // 标题/URL: how/why/analysis/解读/洞察/详解/拆解...\n      keyword: 10,      // 文内: analysis/deep dive/inside/趋势/产业链...\n      industry: 10,     // 芯片/供应链/封装/HBM/工艺/节点nm...\n      longform: 8,      // >1500 字节\n      trustedHost: 6    // 可信媒体\n    },\n    tech: {\n      terms: 6,         // architecture/ablation/SOTA/quantization/MoE...\n      paper: 9,         // arXiv/OpenReview\n      code: 7,          // GitHub/HuggingFace\n      benchmark: 7,     // MMLU/GSM8K/ImageNet/COCO/GLUE...\n      numbers: 2        // 成熟指标/百分比/大数\n    }\n  },\n  penalties: {\n    pr: 9,              // PR/活动/获奖/合作/招聘\n    policy: 7,          // 纯政策\n    productNews: 4      // 纯产品发布口径（无拆解）\n  },\n  dampIfStrong: { threshold: 18, factor: 0.5 }, // 有料则罚款打折\n  categoryMultiplier: {\n    tech_insight:     1.25, // 技术分析/技术洞察\n    industry_insight: 1.25, // 行业分析/行业洞察\n    deep_tech:        1.12, // 论文/benchmark/代码\n    product_insight:  1.08, // 架构拆解/对比评测\n    product_news:     0.85, // 纯发布\n    policy_news:      0.80, // 纯政策\n    pr_event:         0.60, // PR/活动\n    other:            0.75\n  },\n  recencyHalfLifeHours: 96\n};\n\n// —— 输入与配置 —— //\nconst in0 = (Array.isArray(items) && items[0] && items[0].json) ? items[0].json : {};\nconst rawArts = Array.isArray(in0.articles) ? in0.articles : [];\nlet cfg = {};\ntry { cfg = ($items('SetConfig', 0, 0) && $items('SetConfig',0,0).json) || {}; } catch (e) { cfg = {}; }\nconst preferred = Array.isArray(cfg.PREFERRED_CATEGORIES)\n  ? cfg.PREFERRED_CATEGORIES\n  : ['tech_insight','industry_insight','deep_tech','product_insight'];\n\nconst W = deepMerge(JSON.parse(JSON.stringify(DEFAULT_WEIGHTS)), cfg.WEIGHTS || {}); // 深合并权重\nconst takeTop = Number(cfg.TAKE_TOP || 30);\n\n// —— 工具 —— //\nconst now = Date.now();\nfunction host(u){ try{ return new URL(u).hostname.replace(/^www\\./,''); } catch { return ''; } }\nfunction hours(iso){ const t = new Date(iso || now).getTime(); return Math.max(1,(now - t)/36e5); }\nfunction recencyScore(h){\n  // 半衰期：W.recencyHalfLifeHours\n  const half = Math.max(24, Number(W.recencyHalfLifeHours||96));\n  // 映射到 0~20 区间\n  const decay = Math.pow(0.5, h/half);\n  return Math.round(20 * decay);\n}\nfunction lengthScore(len){\n  // 0~12 阶梯\n  return len>6000?12: len>3000?10: len>1500?7: len>800?5: 3;\n}\nfunction hasAny(text, arr){\n  text = text || '';\n  for (const term of arr) {\n    const re = new RegExp(term, 'i');\n    if (re.test(text)) return true;\n  }\n  return false;\n}\nfunction countAny(text, arr){\n  text = text || '';\n  let n=0;\n  for (const term of arr) {\n    const re = new RegExp(term, 'i');\n    if (re.test(text)) n++;\n  }\n  return n;\n}\n\n// —— 域名可信度 —— //\nconst RE_RESEARCH = /(arxiv\\.org|ar5iv|openreview\\.net|jmlr\\.org|aclanthology\\.org|openaccess\\.thecvf\\.com|neurips\\.cc|icml\\.cc|iclr\\.cc|ai\\.googleblog\\.com|deepmind\\.google|openai\\.com|anthropic\\.com|microsoft\\.com\\/research|meta\\.ai|huggingface\\.co)/i;\nconst RE_TRUSTED  = /(bbc\\.com|reuters\\.com|bloomberg\\.com|ft\\.com|wsj\\.com|nytimes\\.com|theinformation\\.com|wired\\.com|arstechnica\\.com|semianalysis\\.com|nikkei\\.com|economist\\.com|cnbeta\\.com|36kr\\.com)/i;\n\n// —— 信号词 —— //\nconst TITLE_CUES = ['\\\\bhow\\\\b','\\\\bwhy\\\\b','analysis','explained','deep\\\\s*dive','inside','what\\\\s+it\\\\s+means','解读','解析','详解','洞察','拆解'];\nconst INSIGHT_KEYWORDS = ['analysis','explainer','deep\\\\s*dive','insight','trend','supply\\\\s*chain','what\\\\s+it\\\\s+means','趋势','洞察','解读','解析','详解','拆解','产业链'];\nconst INDUSTRY_TERMS = [\n  'semiconductor','chip','gpu','npu','accelerator','foundry','node\\\\s*\\\\d+nm','capacity','capex','packaging','hbm','cowos','chiplet','eda','lithography','euv','duv','tsmc','samsung','smic','nvidia','huawei','ascend','gaudi','供应链','产能','良率','封装','工艺','芯片','半导体','HBM','CoWoS'\n];\nconst TECH_TERMS = [\n  'architecture','ablation','sota','quantiz','lora','moe','diffusion','transformer','scaling\\\\s*law','tokenizer','throughput','latency','evals?','ROC','AUC','F1','BLEU','cross[-\\\\s]*entropy'\n];\nconst BENCHMARKS = ['MMLU','GSM8K','HumanEval','ImageNet','COCO','SQuAD','SuperGLUE','Big-Bench','BBH','Math'];\nconst PR_TERMS = ['press\\\\s*release','roadmap','partnership','collaboration','merger','grant','funding','acquisition','award','summit','conference','webinar','keynote','event','giveaway','hiring','job','internship','survey'];\nconst POLICY_TERMS = ['regulation','law','act','bill','guideline','governance','ethics','EU\\\\s*AI\\\\s*Act','FTC','制裁','禁令','合规','监管'];\nconst PROD_NEWS = ['launch(es|ed)?','introduc(es|ed)','rolls\\\\s*out','announc(es|ed)','GA\\\\b','\\\\bbeta\\\\b','preview','SDK','toolkit','integration','Gemini','Copilot','Claude','Llama\\\\s*\\\\d'];\n\n// —— 读取输入 —— //\nconst arts = rawArts.map(a => ({\n  title: a.title || '',\n  url: a.url || '',\n  description: a.description || '',\n  content: a.content || '',\n  author: a.author || '',\n  source: (a.source && a.source.name) || '',\n  publishedAt: a.publishedAt || '',\n})).filter(a => a.title && a.url);\n\nif (!arts.length) {\n  // 不抛错，给空但结构化的结果，便于下游兜底\n  return [{ json: { primary: null, related: [], candidates: [] } }];\n}\n\n// —— 打分 —— //\nconst scored = [];\nfor (const a of arts) {\n  const hn = host(a.url);\n  const txt = `${a.title}\\n${a.description}\\n${a.content||''}`;\n  const titleUrl = `${a.title} ${a.url}`;\n  const len = (txt||'').length;\n\n  // 基础：源站/时间/长度\n  const srcScore = RE_RESEARCH.test(hn) ? 32 : RE_TRUSTED.test(hn) ? 24 : 12;\n  const base = (W.base.sourceTrust * srcScore)\n             + (W.base.recency * recencyScore(hours(a.publishedAt)))\n             + (W.base.length * lengthScore(len));\n\n  // 技术正信号\n  const techHits = countAny(txt, TECH_TERMS);\n  const hasArxiv = /arxiv\\.org|ar5iv|openreview\\.net/i.test(a.url) || /arXiv/i.test(txt);\n  const hasCode  = /github\\.com|huggingface\\.co\\/(papers|datasets|models)/i.test(a.url) || /GitHub|repository|code/i.test(txt);\n  const benchHit = hasAny(txt, BENCHMARKS);\n  const numbers  = ((txt.match(/\\b\\d{2}%|\\b\\d{3,4}\\b/g)||[]).length >= 2) ? 1 : 0;\n\n  let techBoost = 0;\n  techBoost += W.signals.tech.terms * Math.min(3, techHits);\n  techBoost += W.signals.tech.paper * (hasArxiv ? 1 : 0);\n  techBoost += W.signals.tech.code  * (hasCode ? 1 : 0);\n  techBoost += W.signals.tech.benchmark * (benchHit ? 1 : 0);\n  techBoost += W.signals.tech.numbers   * numbers;\n\n  // 洞察/分析信号\n  const titleCue   = hasAny(titleUrl, TITLE_CUES) ? 1 : 0;\n  const insightKW  = countAny(txt, INSIGHT_KEYWORDS);\n  const industryKW = countAny(txt, INDUSTRY_TERMS);\n  const longform   = len > 1500 ? 1 : 0;\n  const trusted    = RE_TRUSTED.test(hn) ? 1 : 0;\n\n  let insightBoost = 0;\n  insightBoost += W.signals.insight.titleCue    * titleCue;\n  insightBoost += W.signals.insight.keyword     * Math.min(3, insightKW);\n  insightBoost += W.signals.insight.industry    * Math.min(3, industryKW);\n  insightBoost += W.signals.insight.longform    * longform;\n  insightBoost += W.signals.insight.trustedHost * trusted;\n\n  // 负信号\n  const prHits = countAny(txt, PR_TERMS);\n  const policyHits = countAny(txt, POLICY_TERMS);\n  const prodHits = countAny(txt, PROD_NEWS);\n  const hardBlock = /bug\\\\s*bounty|vulnerability\\\\s*reward|reward\\\\s*program/i.test(txt);\n\n  let penalty = (W.penalties.pr * prHits)\n              + (W.penalties.policy * policyHits)\n              + (W.penalties.productNews * prodHits);\n  if ((techBoost + insightBoost) >= (W.dampIfStrong?.threshold || 18)) {\n    penalty *= (W.dampIfStrong?.factor || 0.5);\n  }\n\n  // 分类（放宽洞察判定；标题/URL信号有效）\n  let category = 'other';\n  if (hardBlock) {\n    category = 'blocked';\n  } else if ((titleCue || insightKW) && (techHits || hasArxiv || hasCode || benchHit)) {\n    category = 'tech_insight'; // 技术分析/技术洞察\n  } else if (\n    (industryKW >= 1) &&\n    (titleCue || insightKW || trusted)\n  ) {\n    category = 'industry_insight'; // 行业分析/行业洞察\n  } else if (hasArxiv || hasCode || benchHit || techHits >= 2) {\n    category = 'deep_tech';\n  } else if (prodHits >= 1 && (titleCue || insightKW)) {\n    category = 'product_insight';\n  } else if (policyHits >= 1 && (techBoost + insightBoost) < 12) {\n    category = 'policy_news';\n  } else if (prHits >= 1 && (techBoost + insightBoost) < 12) {\n    category = 'pr_event';\n  } else if (prodHits >= 1) {\n    category = 'product_news';\n  }\n\n  // 总分 + 类别乘数\n  let score = base + techBoost + insightBoost - penalty;\n  const mult = (W.categoryMultiplier && W.categoryMultiplier[category]) || 1;\n  score = score * mult;\n\n  // 是否保留到候选（严格集）\n  const keepStrict = !hardBlock && preferred.includes(category);\n\n  scored.push({\n    ...a,\n    QualityScore: Math.round(score),\n    host: hn,\n    _base: Math.round(base),\n    _techBoost: Math.round(techBoost),\n    _insightBoost: Math.round(insightBoost),\n    _penalty: Math.round(penalty),\n    _mult: mult,\n    signals: {\n      category, srcScore, len,\n      techHits, hasArxiv, hasCode, benchHit, numbers,\n      titleCue, insightKW, industryKW, longform, trusted,\n      prHits, policyHits, prodHits\n    },\n    _keepStrict: keepStrict\n  });\n}\n\n// —— 去重（近似按标题） —— //\nconst buckets = new Map();\nfor (const a of scored) {\n  const key = (a.title||'').toLowerCase().replace(/[^\\w\\u4e00-\\u9fa5\\s]/g,' ').replace(/\\s+/g,' ').trim();\n  if (!buckets.has(key)) buckets.set(key, []);\n  buckets.get(key).push(a);\n}\nlet kept = [];\nfor (const [, group] of buckets) {\n  group.sort((x,y)=> y.QualityScore - x.QualityScore);\n  // 优先挑严格集的，否则取分最高\n  const strictTop = group.find(g => g._keepStrict);\n  kept.push(strictTop || group[0]);\n}\n\n// —— 只取严格集；若空，则宽松兜底 —— //\nlet strict = kept.filter(x => x._keepStrict);\nstrict.sort((a,b)=> b.QualityScore - a.QualityScore);\n\nif (!strict.length) {\n  // 宽松兜底：可信媒体 + 行业/分析信号（标题/描述级别），但排除奖励计划类\n  const loose = kept.filter(x => {\n    if (/bug\\\\s*bounty|vulnerability\\\\s*reward|reward\\\\s*program/i.test(`${x.title}\\n${x.description}\\n${x.content||''}`)) return false;\n    const looksInsight = x.signals.industryKW >= 1 || x.signals.titleCue || x.signals.insightKW >= 1;\n    const trusted = RE_TRUSTED.test(x.host);\n    return trusted && looksInsight;\n  });\n  strict = loose.length ? loose : kept; // 再不行就直接用 kept，绝不空\n}\n\nstrict.sort((a,b)=> b.QualityScore - a.QualityScore);\nconst finalList = strict.slice(0, Math.min(takeTop, strict.length));\n\nconst primary = finalList[0] || null;\nconst related = finalList.slice(1, 4);\nreturn [{ json: { primary, related, candidates: finalList, weights: W, preferred } }];\n\n\n/*\nconst cfgItem = $items('SetConfig', 0, 0) || { json: {} };\nconst cfg = cfgItem.json || {};\nconst takeTop = Number(cfg.TAKE_TOP || 30);\nconst articles = (items[0].json.articles || []).map(a => ({\n  title: a.title, url: a.url, description: a.description || '',\n  content: a.content || '', author: a.author || '',\n  source: (a.source && a.source.name) || '', publishedAt: a.publishedAt || ''\n})).filter(a => a.title && a.url);\nfunction host(u){ \n  try { \n    return new URL(u).hostname.replace(/^www\\./,''); \n  } catch { \n    return ''; \n  } \n}\nfunction hours(iso){ \n  return Math.max(1,(Date.now()-new Date(iso||Date.now()).getTime())/36e5); \n}\nfunction recency(h){ \n  if(h<=24) return 20; \n  if(h<=48) return 14; \n  if(h<=168) return 9; \n  return 3; \n}\nfunction depth(text){ \n  const l=text.length; \n  let s=l>8000?18:l>4000?14:l>1500?10:l>800?7:4;\n  if(/arxiv|doi|github|sec\\./i.test(text)) \n    s+=2; \n  return Math.min(20,s); \n}\nfunction srcScore(hn){ \n  return /arxiv|nature|sciencedirect|reuters|bloomberg|ft|nytimes|semianalysis|alignmentforum|lesswrong|theverge|techcrunch/i.test(hn)?30:18; \n}\nfunction originality(t){ \n  return /exclusive|interview|whitepaper|benchmark|replicate|ablations?/i.test(t)?8:4; }\nfunction author(a){ \n  return a ? (a.includes(' ')?12:8) : 3; \n}\nfunction score(a){\n  const txt = `${a.title}\\n${a.description}\\n${a.content}`;\n  return Math.round(0.35*srcScore(host(a.url)) + 0.20*recency(hours(a.publishedAt)) + 0.20*depth(txt) + 0.10*originality(txt) + 0.15*author(a.author));\n}\n\nconst buckets = new Map();\n\nfor (const a of articles){\n  const key=(a.title||'').toLowerCase().replace(/[^\\w\\s]/g,' ').replace(/\\s+/g,' ').trim();\n  const s=score(a);\n  const j={...a, QualityScore:s, host:host(a.url)};\n  if(!buckets.has(key)) \n    buckets.set(key,[]);\n  buckets.get(key).push(j);\n}\nlet kept=[];\nfor (const [,group] of buckets){ \n  group.sort((x,y)=>y.QualityScore-x.QualityScore); \n  kept.push(group[0]); \n}\n\nkept.sort((a,b)=>b.QualityScore-a.QualityScore);\n\nif (!kept.length) {\n  throw new Error('No NewsAPI candidates returned for current configuration');\n}\nconst takeCount = Math.min(takeTop, kept.length);\nkept = kept.slice(0, takeCount);\nconst primary = kept[0];\nconst related = kept.slice(1, 4);\nreturn [{json:{primary,related,candidates: kept}}];\n*/"
+        "jsCode": "/***********************\n * ScoreSelect (All-in-one)\n * - Flattens inputs (articles[] or multi-items)\n * - Normalizes & hashes (FNV-1a)\n * - Historical dedup (seen.json)\n * - Batch dedup (Jaro-Winkler)\n * - Category detect + scoring\n * - Emits { primary, related, candidates, seenState, debug }\n * Mode: Run once for all items\n ***********************/\n\n/* ========= Utilities ========= */\nfunction fnv1aHex(str=''){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);} return (h>>>0).toString(16).padStart(8,'0');}\nfunction toHalfWidth(s=''){ return s.replace(/[\\u2018\\u2019]/g,\"'\").replace(/[\\u201C\\u201D]/g,'\"').replace(/[\\uFF01-\\uFF5E]/g,ch=>String.fromCharCode(ch.charCodeAt(0)-0xFEE0)).replace(/\\u3000/g,' '); }\nfunction normalizeUrl(u){ try{ const url=new URL(u); url.hash=''; const drop=['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ref','fbclid','gclid','yclid','spm','igshid','mc_cid','mc_eid','share_type','share_pt']; for (const k of drop) url.searchParams.delete(k); const host=url.hostname.replace(/^www\\./,'').toLowerCase(); const path=url.pathname.replace(/\\/+$/,''); const qs=[...url.searchParams.entries()].sort((a,b)=>a[0].localeCompare(b[0])); return `${host}${path}${qs.length?('?'+qs.map(x=>`${x[0]}=${x[1]}`).join('&')):''}`; }catch{ return (u||'').replace(/^https?:\\/\\//,'').replace(/^www\\./,'');}}\nfunction normalizeTitle(t='', url=''){ let s=toHalfWidth(t).trim(); const host=(()=>{try{return new URL(url).hostname.replace(/^www\\./,'');}catch{return '';} })(); if (host) s=s.replace(new RegExp(`\\\\s*[-|—|\\\\|]\\\\s*${host.replace(/\\./g,'\\\\.')}$`,'i'),''); s=s.replace(/[（(](评论|社评|快讯|图解|直播)[)）]$/,''); s=s.replace(/[“”\"‘’'、，,。.！!？?\\[\\]【】<>（）()：:;；]/g,' ').replace(/\\s+/g,' ').trim(); return s;}\nfunction jaroWinkler(a='', b=''){ a=a.toLowerCase(); b=b.toLowerCase(); const mt=(s,t)=>{ const m=Math.max(s.length,t.length)/2-1|0; const ms1=new Array(s.length).fill(false), ms2=new Array(t.length).fill(false); let matches=0, trans=0; for(let i=0;i<s.length;i++){ const st=Math.max(0,i-m), en=Math.min(i+m+1,t.length); for(let j=st;j<en;j++){ if(ms2[j]) continue; if(s[i]===t[j]){ ms1[i]=ms2[j]=true; matches++; break; } } } if(!matches) return [0,0]; let k=0; for(let i=0;i<s.length;i++) if(ms1[i]){ while(!ms2[k]) k++; if(s[i]!==t[k]) trans++; k++; } return [matches, trans/2]; }; const [m,t]=mt(a,b); if(!m) return 0; const j=(m/a.length + m/b.length + (m-t)/m)/3; let l=0; while(l<4 && a[l] && b[l] && a[l]===b[l]) l++; return j + l*0.1*(1-j); }\nfunction safeItems(name){ try{ const out=$items(name,0,0,{returnAll:true}); return Array.isArray(out)?out:[]; } catch { return []; } }\n/* function parseSeen(fromGithub){\n  const obj = fromGithub?.[0]?.json || {};\n  let entries=[], sha=null;\n  try{\n    if (obj.content) {\n      const txt = Buffer.from(obj.content,'base64').toString('utf8');\n      entries = JSON.parse(txt || '[]');\n      sha = obj.body?.sha || null;\n    }\n  }catch(e){ entries=[]; sha=null; }\n  return { entries: Array.isArray(entries)?entries:[], sha };\n} */\nfunction parseSeen(fromGithub){\n  const obj  = fromGithub?.[0]?.json || {};\n  const body = (obj && typeof obj.body === 'object') ? obj.body : obj; // 关键：兼容 fullResponse\n  let entries = [], sha = null;\n  try {\n    const b64 = body?.content || '';\n    if (b64) {\n      const txt = Buffer.from(b64, 'base64').toString('utf8');\n      entries = JSON.parse(txt || '[]');\n    }\n    sha = body?.sha || null;\n  } catch { /* noop */ }\n  return { entries: Array.isArray(entries) ? entries : [], sha };\n}\n\n/* ========= Config ========= */\nconst cfg = (safeItems('SetConfig')[0]?.json) || {};\nconst TAKE_TOP_N   = Number(cfg.TOP_N || 4);            // 1 + (N-1)\nconst TTL_DAYS     = Number(cfg.SEEN_TTL_DAYS || 35);\nconst PREF_CATS    = cfg.PREFERRED_CATEGORIES || ['deep_tech','industry_insight','tech_insight','product_insight'];\nconst EMIT_MULT    = Boolean(cfg.EMIT_MULTIPLE);         // 可选：多条 item 输出模式（默认 false 聚合输出）\n\n/* ========= Flatten input ========= */\n// 支持：① 1 条 item 里有 articles[] 或 data.articles[]；② 多条 item 各一篇\nlet news = $('NewsFetch').first().json.articles;\n/*\nconst raw = (items || []).map(it => it.json || {});\nif (raw.length === 1 && Array.isArray(raw[0]?.articles)) {\n  news = raw[0].articles;\n} else if (raw.length === 1 && Array.isArray(raw[0]?.data?.articles)) {\n  news = raw[0].data.articles;\n} else {\n  news = raw;\n}\n*/\n\n// 宽松映射别名\nconst pickUrl   = (a={}) => a.url || a.link || a.permalink || a.guid || a.sourceUrl || a.storyUrl || '';\nconst pickTitle = (a={}) => a.title || a.headline || a.name || a.subject || '';\n\nconst droppedBasic = [];\nnews = news.map(a => ({ ...a, url: pickUrl(a), title: pickTitle(a) }))\n           .filter(a => {\n             const ok = Boolean(a.url && a.title);\n             if (!ok) droppedBasic.push({ sample: { url: a.url, title: a.title }, reason: 'missing url/title' });\n             return ok;\n           });\nconst TOTAL_IN = news.length;\n\n/* ========= Load seen.json ========= */\nconst seen = parseSeen(safeItems('GetSeen'));\nconst seenUrl = new Set();\nconst seenTitle = new Set();\nconst seenTitleNorms = [];\nconst now = Date.now();\nconst TTL_MS = TTL_DAYS * 24 * 3600 * 1000;\n\nfor (const r of seen.entries) {\n  const ts = new Date(r.firstSeenAt || 0).getTime();\n  if (!ts || (now - ts) > TTL_MS) continue;  // 滚动窗口\n  if (r.urlKey)   seenUrl.add(r.urlKey);\n  if (r.titleKey) seenTitle.add(r.titleKey);\n  if (r.titleNorm) seenTitleNorms.push(String(r.titleNorm).toLowerCase());\n}\n\n/* ========= Category & Scoring ========= */\nfunction detectCategory(rec){\n  const t = `${rec.title||''} ${rec.description||''}`.toLowerCase();\n  const u = (rec.url||'').toLowerCase();\n  const deep = /(paper|arxiv|openreview|architecture|benchmark|inference|latency|throughput|kernel|compiler|quantization|lora|moe|attention|nvlink|hbm|npu|asic|fpga|dataset|pretrain|fine[-\\s]?tune|weights|distillation|opensource|open[-\\s]?source)/;\n  const ind  = /(market|landscape|trend|survey|outlook|valuation|supply\\s?chain|capacity|foundry|capex|pricing|shipment|import|export|ban|sanction|nvidia|nvda|amd|intel|tsmc|smic|samsung|huawei)/;\n  const tech = /(postmortem|post[-\\s]?mortem|root\\s?cause|retrospective|scaling|optimization|observability|incident|outage|design\\s?notes|engineering)/;\n  const prod = /(roadmap|case\\s?study|changelog|release\\s?notes|product\\s?update|design\\s?decision)/;\n  const pr   = /(announces?|launch(es)?|partnership|program|initiative|grant|award|event|conference|webinar|summit|hiring)/;\n  const policy=/(regulation|policy|bill|law|ban|compliance|guideline|white\\s?paper)/;\n\n  if (deep.test(t) || /arxiv\\.org|openreview\\.net/.test(u)) return 'deep_tech';\n  if (ind.test(t)) return 'industry_insight';\n  if (tech.test(t)) return 'tech_insight';\n  if (prod.test(t)) return 'product_insight';\n  if (pr.test(t)) return 'news_pr';\n  if (policy.test(t)) return 'policy';\n  return 'other';\n}\nfunction catWeight(cat){\n  const order = {\n    deep_tech: 1.00,\n    industry_insight: 0.95,\n    tech_insight: 0.92,\n    product_insight: 0.88,\n    policy: 0.55,\n    news_pr: 0.35,\n    other: 0.40,\n  };\n  const base = order[cat] ?? 0.40;\n  return base * (PREF_CATS.includes(cat) ? 1.10 : 1.0);\n}\nfunction recencyBonus(publishedAt){\n  if (!publishedAt) return 0;\n  const d = Math.max(0, (Date.now()-new Date(publishedAt).getTime())/(24*3600*1000));\n  if (d <= 1) return 12;\n  if (d <= 3) return 8;\n  if (d <= 7) return 5;\n  if (d <= 14) return 2;\n  return 0;\n}\nfunction penaltyPR(rec){\n  const t = `${rec.title||''} ${rec.description||''}`.toLowerCase();\n  return /(announces?|launch|partnership|webinar|summit|award|program)/.test(t) ? -18 : 0;\n}\nfunction qualityScore(rec){\n  const cat = detectCategory(rec);\n  const base = 100 * catWeight(cat);\n  const r    = recencyBonus(rec.publishedAt);\n  const pr   = penaltyPR(rec);\n  const len  = ((rec.content||'').length + (rec.description||'').length) > 320 ? 3 : 0;\n  return Math.round(base + r + pr + len);\n}\n\n/* ========= Enrich + historical dedup ========= */\nconst enriched = [];\nconst droppedHist = [];\n\nfor (const a of news) {\n  const _normUrl   = normalizeUrl(a.url);\n  const _urlKey    = fnv1aHex(_normUrl);\n  const _titleNorm = normalizeTitle(a.title, a.url);\n  const _titleKey  = fnv1aHex(_titleNorm.toLowerCase());\n  const category   = detectCategory(a);\n  const QualityScore = qualityScore({ ...a, category });\n\n  const histDup =\n    seenUrl.has(_urlKey) ||\n    seenTitle.has(_titleKey) ||\n    (_titleNorm && seenTitleNorms.some(t => jaroWinkler(_titleNorm.toLowerCase(), t) >= 0.92));\n\n  if (histDup) {\n    droppedHist.push({ url: a.url, title: a.title, reason: 'seen' });\n    continue;\n  }\n\n  enriched.push({\n    source: a.source?.name || a.source || '',\n    author: a.author || '',\n    title: a.title || '',\n    description: a.description || '',\n    url: a.url,\n    urlToImage: a.urlToImage || '',\n    publishedAt: a.publishedAt || a.pubDate || '',\n    content: a.content || '',\n    category,\n    QualityScore,\n    _normUrl, _urlKey, _titleNorm, _titleKey, _hashAlgo: 'fnv1a32'\n  });\n}\n\n/* ========= Batch dedup (similar titles) + sort ========= */\nenriched.sort((a,b)=> (b.QualityScore||0) - (a.QualityScore||0));\n/*\nconst kept = [];\nconst seenBatch = [];\nconst droppedBatch = [];\n\nfor (const c of enriched) {\n  const t = (c._titleNorm||'').toLowerCase();\n  const dup = seenBatch.some(x => jaroWinkler(t, x) >= 0.92) || seenBatch.includes(c._titleKey);\n  if (dup) { droppedBatch.push({ url: c.url, title: c.title, reason: 'batch-dup' }); continue; }\n  kept.push(c);\n  seenBatch.push(c._titleKey || t);\n}\n*/\n\nconst kept = [];\nconst droppedBatch = [];\nconst seenBatchTitleKeys  = new Set();\nconst seenBatchUrlKeys    = new Set();\nconst seenBatchTitleNorms = []; // 用于相似度\n\nfor (const c of enriched) {\n  const tNorm = (c._titleNorm || '').toLowerCase();\n  const titleDup = seenBatchTitleKeys.has(c._titleKey) ||\n                   seenBatchTitleNorms.some(x => jaroWinkler(tNorm, x) >= 0.92);\n  const urlDup   = seenBatchUrlKeys.has(c._urlKey);\n\n  if (titleDup || urlDup) {\n    droppedBatch.push({ url: c.url, title: c.title, reason: urlDup ? 'dup-url' : 'dup-title' });\n    continue;\n  }\n\n  kept.push(c);\n  seenBatchTitleKeys.add(c._titleKey);\n  seenBatchUrlKeys.add(c._urlKey);\n  seenBatchTitleNorms.push(tNorm);\n}\n\n/* ========= Pick primary / related (with fallback) ========= */\nlet primary = kept[0] || null;\nlet related = kept.slice(1, TAKE_TOP_N);\n\nif (!primary && enriched.length) {\n  // 极端兜底：若批次去重过严导致空，至少给一篇\n  primary = enriched[0];\n  related = enriched.slice(1, TAKE_TOP_N);\n}\n\n/* ========= Emit ========= */\nif (EMIT_MULT) {\n  // 多条输出模式：每条一个候选\n  return kept.map(k => ({ json: k }));\n} else {\n  // 单条聚合输出（推荐）\n  return [{\n    json: {\n      primary,\n      related,\n      candidates: kept,\n      seenState: { entries: seen.entries, sha: seen.sha, ttlDays: TTL_DAYS },\n      debug: {\n        droppedBasic,  // 缺 url/title\n        droppedHist,   // 历史去重\n        droppedBatch,  // 批次相似去重\n        totalIn: TOTAL_IN,\n        totalOut: kept.length\n      }\n    }\n  }];\n}\n"
       },
       "id": "d52bf12f-6dca-4cc3-9b5d-f2f014a95cd1",
       "name": "ScoreSelect",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        -512,
+        -304,
         256
       ],
       "notesInFlow": true,
@@ -103,7 +103,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -208,
+        0,
         256
       ],
       "onError": "continueErrorOutput"
@@ -124,7 +124,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        992,
+        1408,
         240
       ],
       "headerParametersUi": {
@@ -156,7 +156,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        1216,
+        1632,
         240
       ],
       "notesInFlow": true,
@@ -172,7 +172,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        1456,
+        1872,
         240
       ],
       "notesInFlow": true,
@@ -217,7 +217,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1728,
+        2144,
         240
       ],
       "headerParametersUi": {
@@ -254,7 +254,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        2288,
+        2704,
         240
       ]
     },
@@ -268,7 +268,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        2544,
+        2960,
         240
       ]
     },
@@ -311,7 +311,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2816,
+        3232,
         240
       ],
       "headerParametersUi": {
@@ -343,7 +343,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        2016,
+        2432,
         240
       ],
       "notesInFlow": true,
@@ -357,7 +357,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        16,
+        432,
         384
       ],
       "id": "328bd567-2550-4735-9b99-651038c0c649",
@@ -372,7 +372,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        176,
+        592,
         576
       ],
       "id": "48fdd7c2-554c-4948-b8fb-1ac7b253bc20",
@@ -387,11 +387,97 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        336,
+        752,
         672
       ],
       "id": "8c637d0b-faa0-41dc-99fe-92ed91f42ea1",
       "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * PickWinnerAndPrepareSeen\n * 依赖：ScoreSelect（已输出 primary / related[] / seenState，并且 meta 内已带 _urlKey/_titleKey/_titleNorm）\n * 分支：ReadPrimary / readRelated / readRelated2 / readRelated3（可能有的未执行）\n * 作用：按优先级挑出第一篇抓取成功的正文；生成 seen.json 的 GitHub PUT body\n */\n\n// ---------- 工具 ----------\nfunction safeItems(name) {\n  try {\n    const out = $items(name, 0, 0, { returnAll: true });\n    return Array.isArray(out) ? out : [];\n  } catch (_) { return []; }\n}\nfunction pickPayload(arr) {\n  if (!Array.isArray(arr) || !arr.length) return null;\n  const j = arr[0]?.json || {};\n  // 你的抓取节点如果字段名不同（如 content/markdown），按需调整\n  return j.data || j.markdown || j.content || null;\n}\n\n// 仅作兜底：如上游没带 key，才会用到这些函数（正常不会触发）\nfunction fnv1aHex(str='') {\n  let h = 0x811c9dc5;\n  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h += (h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24); }\n  return (h>>>0).toString(16).padStart(8,'0');\n}\nfunction normalizeUrl(u) {\n  try {\n    const url = new URL(u); url.hash = '';\n    const drop = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ref','fbclid','gclid','yclid','spm','igshid','mc_cid','mc_eid','share_type','share_pt'];\n    for (const k of drop) url.searchParams.delete(k);\n    const host = url.hostname.replace(/^www\\./,'').toLowerCase();\n    const path = url.pathname.replace(/\\/+$/,'');\n    const qs   = [...url.searchParams.entries()].sort((a,b)=>a[0].localeCompare(b[0]));\n    return `${host}${path}${qs.length?('?'+qs.map(x=>`${x[0]}=${x[1]}`).join('&')):''}`;\n  } catch { return (u||'').replace(/^https?:\\/\\//,'').replace(/^www\\./,''); }\n}\nfunction toHalfWidth(s='') {\n  return s.replace(/[\\u2018\\u2019]/g,\"'\")\n          .replace(/[\\u201C\\u201D]/g,'\"')\n          .replace(/[\\uFF01-\\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0)-0xFEE0))\n          .replace(/\\u3000/g,' ');\n}\nfunction normalizeTitle(t='', url='') {\n  let s = toHalfWidth(t).trim();\n  const host = (()=>{ try{ return new URL(url).hostname.replace(/^www\\./,''); }catch{return '';} })();\n  if (host) s = s.replace(new RegExp(`\\\\s*[-|—|\\\\|]\\\\s*${host.replace(/\\./g,'\\\\.')}$`,'i'), '');\n  s = s.replace(/[（(](评论|社评|快讯|图解|直播)[)）]$/,'');\n  s = s.replace(/[“”\"‘’'、，,。.！!？?\\[\\]【】<>（）()：:;；]/g,' ')\n       .replace(/\\s+/g,' ')\n       .trim();\n  return s;\n}\n\n// ---------- 读取 ScoreSelect 输出 ----------\nconst ssItem = safeItems('ScoreSelect')[0]?.json || {};\nconst primaryMeta = ssItem.primary || null;\nconst relatedArr  = Array.isArray(ssItem.related) ? ssItem.related : [];\nconst seenStateIn = ssItem.seenState || { entries: [], sha: null, ttlDays: 35 };\n\n// ---------- 读取抓取分支的实际正文 ----------\nconst branches = [\n  { name: 'ReadPrimary',  meta: primaryMeta,        idx: 0, role: 'primary'     },\n  { name: 'readRelated',  meta: relatedArr[0]||null,idx: 1, role: 'related_0'   },\n  { name: 'readRelated2', meta: relatedArr[1]||null,idx: 2, role: 'related_1'   },\n  { name: 'readRelated3', meta: relatedArr[2]||null,idx: 3, role: 'related_2'   },\n];\n\nlet pickedMeta=null, pickedBody=null, pickedIdx=-1, pickedRole='';\nconst branchDebug = [];\nfor (const b of branches) {\n  const arr  = safeItems(b.name);\n  const body = pickPayload(arr);\n  branchDebug.push({ branch: b.name, hasBody: !!body });\n  if (body && b.meta && b.meta.url) {\n    pickedMeta = b.meta;\n    pickedBody = body;\n    pickedIdx  = b.idx;\n    pickedRole = b.role;\n    break;\n  }\n}\nif (!pickedBody) {\n  throw new Error(JSON.stringify({ msg: 'No article content fetched from any branch.', branchDebug }));\n}\nif (!pickedMeta || !pickedMeta.url) {\n  throw new Error(JSON.stringify({ msg: 'Picked article meta unavailable (check ScoreSelect output vs fetch branches).', pickedIdx, branchDebug }));\n}\n\n// ---------- 组装 selected（优先使用 ScoreSelect 已算好的 key） ----------\nconst urlKey   = pickedMeta._urlKey   || fnv1aHex(normalizeUrl(pickedMeta.url || ''));\nconst titleKey = pickedMeta._titleKey || fnv1aHex(normalizeTitle(pickedMeta.title || '', pickedMeta.url || '').toLowerCase());\nconst titleNorm= pickedMeta._titleNorm|| normalizeTitle(pickedMeta.title || '', pickedMeta.url || '');\nconst normUrl  = pickedMeta._normUrl  || normalizeUrl(pickedMeta.url || '');\n\nconst selected = {\n  ...pickedMeta,\n  selectedIndex: pickedIdx,\n  selectedRole: pickedRole,\n  body: pickedBody,\n  _urlKey: urlKey,\n  _titleKey: titleKey,\n  _titleNorm: titleNorm,\n  _normUrl: normUrl,\n  _hashAlgo: pickedMeta._hashAlgo || 'fnv1a32'\n};\n\n// ---------- 合并 seen.entries 并生成 GitHub PUT body（幂等） ----------\nconst nowISO   = new Date().toISOString();\nconst ttlDays  = Number(seenStateIn.ttlDays || 35);\nconst TTL_MS   = ttlDays * 24 * 3600 * 1000;\nconst nowMs    = Date.now();\n\nconst entries0 = Array.isArray(seenStateIn.entries) ? seenStateIn.entries : [];\nconst pruned   = entries0.filter(r => {\n  const ts = new Date(r.firstSeenAt || 0).getTime();\n  return ts && (nowMs - ts) <= TTL_MS;\n});\n\n// 已存在则不重复追加\nconst existed = pruned.some(r => r.urlKey === urlKey || r.titleKey === titleKey);\nif (!existed) {\n  pruned.push({\n    urlKey,\n    titleKey,\n    titleNorm,\n    url: pickedMeta.url || '',\n    source: pickedMeta.source || '',\n    firstSeenAt: nowISO,\n    algo: 'fnv1a32'\n  });\n}\n\n// 序列化为 base64\nconst contentStr = JSON.stringify(pruned, null, 2);\nconst contentB64 = Buffer.from(contentStr, 'utf8').toString('base64');\n\n// 读 GetSeen 拿 sha（200 有，404 就是 undefined）\nconst gsItem  = $items('GetSeen', 0, 0) || { json: {} };\nconst gsJson  = gsItem[0]?.json || {};\n// 如果 HTTP 节点开启了 “Include response headers and status”，真正数据在 body 里\nconst payload = (gsJson && typeof gsJson.body === 'object') ? gsJson.body : gsJson;\n// 只有 200（文件存在）时才会有 sha；首次创建（404）sha 为 null\nconst sha     = payload ? payload.sha : null;\n\nconst githubPutBody = {\n  message: `chore(seen): +1 ${pickedRole} at ${nowISO}`,\n  content: contentB64\n};\n\nif (sha) githubPutBody.sha = sha;    // 只有真的有 sha 才加\n\n// ---------- 输出：只 1 条 item ----------\nreturn [{\n  json: {\n    selected,\n    githubPutBody,\n    debug: { branchDebug, hadSeen: entries0.length, wroteSha: !!sha, sha:sha}\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        240
+      ],
+      "id": "0aa7bac9-8e8a-4c0b-a860-70e67af2faf5",
+      "name": "PickWinnerAndPrepareSeen"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://api.github.com/repos/0xfa1e/wechat-auto-rewriting-article/contents/seen/seen.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  JSON.stringify((() => {\n    const b  = $items('PickWinnerAndPrepareSeen').first().json.githubPutBody || {};\n    const br = $items('SetConfig').first()?.json?.GH_BRANCH;\n    const obj = { message: b.message, content: b.content };\n    if (b.sha) obj.sha = b.sha;       // 只有真的有 sha 才加\n    if (br)    obj.branch = br;       // 有分支才加\n    return obj;\n  })())\n}}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3440,
+        240
+      ],
+      "id": "8ee09957-d221-4de6-893e-423482b895c0",
+      "name": "UpsertSeen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TFfyNvEq8pZUT6H0",
+          "name": "github-access"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/0xfa1e/wechat-auto-rewriting-article/contents/seen/seen.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        256
+      ],
+      "id": "e7251131-bfeb-4d6b-9a5f-a5cada6c31ca",
+      "name": "GetSeen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TFfyNvEq8pZUT6H0",
+          "name": "github-access"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -422,7 +508,7 @@
       "main": [
         [
           {
-            "node": "ScoreSelect",
+            "node": "GetSeen",
             "type": "main",
             "index": 0
           }
@@ -444,7 +530,7 @@
       "main": [
         [
           {
-            "node": "OpenAICompose",
+            "node": "PickWinnerAndPrepareSeen",
             "type": "main",
             "index": 0
           }
@@ -539,7 +625,7 @@
       "main": [
         [
           {
-            "node": "OpenAICompose",
+            "node": "PickWinnerAndPrepareSeen",
             "type": "main",
             "index": 0
           }
@@ -557,7 +643,7 @@
       "main": [
         [
           {
-            "node": "OpenAICompose",
+            "node": "PickWinnerAndPrepareSeen",
             "type": "main",
             "index": 0
           }
@@ -575,7 +661,40 @@
       "main": [
         [
           {
+            "node": "PickWinnerAndPrepareSeen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PickWinnerAndPrepareSeen": {
+      "main": [
+        [
+          {
             "node": "OpenAICompose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHubPush": {
+      "main": [
+        [
+          {
+            "node": "UpsertSeen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetSeen": {
+      "main": [
+        [
+          {
+            "node": "ScoreSelect",
             "type": "main",
             "index": 0
           }
@@ -587,7 +706,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ebe8915b-efd1-442b-8cf8-cfece43fe355",
+  "versionId": "13303a10-fff1-4762-bca6-1c368cfae56c",
   "meta": {
     "instanceId": "07d1041ff3917b6fea954efa1ffb533eaee2c99ed393956fa7cc3e8f87f14a09"
   },
